@@ -30,8 +30,8 @@ observation = [[robot1.x, robot1.y, robot1.heading, robot2.x, robot2.y, robot2.h
 Hyperparameter:
 
 #env size
-room_length=1.0 
-room_width=0.5
+room_length = 1.0 
+room_width = 0.5
 
 #obs and visualization circle radius
 obs_radius = 0.2
