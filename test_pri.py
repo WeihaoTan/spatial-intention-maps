@@ -9,7 +9,7 @@ def main(args):
     #ACTIONLIST = ["move forward", "turn left", "turn right", "stay"]
 
     # Create env
-    env = VectorEnv(use_egl_renderer=True, show_gui=True, room_length=1.0, room_width=0.5, obs_radius = 0.2, termination_step = 200)
+    env = VectorEnv(use_egl_renderer=True, show_gui=True, room_length=1.0, room_width=0.5, obs_radius = 0.2, termination_step = 2000)
     
 
     # Run policy

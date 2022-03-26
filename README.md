@@ -22,11 +22,13 @@ pip install gym
 
 ## Env
 ```bash         
+# [0, 0] is the center of the map
 observation = [[robot1.x, robot1.y, robot1.heading, robot2.x, robot2.y, robot2.heading, target.x, target.y], [robot1.x, robot1.y, robot1.heading, robot2.x, robot2.y, robot2.heading, target.x, target.y]]
 ```
 
 ```bash
 Hyperparameter:
+
 #env size
 room_length=1.0 
 room_width=0.5
@@ -61,15 +63,15 @@ Run test_MA.py
 ```
 
 ```bash
-# 0 <= x, y <= 1 
+# -1 <= x, y <= 1 
 ACTIONLIST = [x, y]
 
 # xi, yi: target position of robot i
 action = [x1, y1, x2, y2]
 
 # real position in map: 
-# x_in_map = x * room_length
-# y_in_map = x * room_width
+# x_in_map = x * room_length / 2
+# y_in_map = y * room_width / 2
 
 ```
 

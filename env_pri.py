@@ -52,7 +52,7 @@ class VectorEnv:
             random_seed=None, use_egl_renderer=False,
             show_gui=False, show_debug_annotations=False, show_occupancy_maps=False,
             real=False, real_robot_indices=None, real_cube_indices=None, real_debug=False,
-            obs_radius = 0.1, termination_step = 200
+            obs_radius = 0.1, termination_step = 2000
         ):
 
         ################################################################################
