@@ -9,7 +9,8 @@ def main(args):
 
     # Create env
     step = 0
-    env = VectorEnv(use_egl_renderer=True, show_gui=True, room_length=1.0, room_width=0.5, obs_radius = 0.2, termination_step = 2000)
+    #env = VectorEnv(use_egl_renderer=True, show_gui=True, room_length=1.0, room_width=0.5, obs_radius = 0.2, termination_step = 2000, target_pos = None, target_width = 0.3)
+    env = VectorEnv(use_egl_renderer=True, show_gui=True, room_length=1.0, room_width=0.5, obs_radius = 0.2, termination_step = 2000, target_pos = [0.35, 0.15], target_width = 0.3)
 
 
     # Run policy

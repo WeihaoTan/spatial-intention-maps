@@ -38,6 +38,13 @@ obs_radius = 0.2
 
 #maximal steps for one episode
 termination_step = 2000
+
+#central position of the red target 
+#random position if None
+target_pos = [0.35, 0.15] or None
+
+#width of the red target square 
+target_width = 0.3
 ```
 
 

@@ -25,7 +25,7 @@ class VectorEnv:
     WALL_HEIGHT = 0.1
     CUBE_WIDTH = 0.044
     #RECEPTACLE_WIDTH = 0.15
-    RECEPTACLE_WIDTH = 0.3
+    #RECEPTACLE_WIDTH = 0.3
     IDENTITY_QUATERNION = (0, 0, 0, 1)
     REMOVED_BODY_Z = -1000  # Hide removed bodies 1000 m below
     CUBE_COLOR = (237.0 / 255, 201.0 / 255, 72.0 / 255, 1)  # Yellow
@@ -52,7 +52,7 @@ class VectorEnv:
             random_seed=None, use_egl_renderer=False,
             show_gui=False, show_debug_annotations=False, show_occupancy_maps=False,
             real=False, real_robot_indices=None, real_cube_indices=None, real_debug=False,
-            obs_radius = 0.1, termination_step = 2000
+            obs_radius = 0.1, termination_step = 2000, target_pos = None, target_width = 0.3
         ):
 
         ################################################################################
@@ -75,6 +75,10 @@ class VectorEnv:
         self.obs_radius = obs_radius
         self.radiusIds = []
         self.termination_step = termination_step
+
+        self.target_pos = target_pos
+        self.target_width = target_width
+
         # self.n_agent = n_agent
 
         # self.action_space = spaces.Discrete(5)
@@ -123,7 +127,13 @@ class VectorEnv:
         self.obstacle_ids = None
         self.receptacle_id = None
         if not any('rescue_robot' in g for g in self.robot_config):
-            self.receptacle_position = (self.room_length / 2 - VectorEnv.RECEPTACLE_WIDTH / 2, self.room_width / 2 - VectorEnv.RECEPTACLE_WIDTH / 2, 0)
+            #self.receptacle_position = (self.room_length / 2 - self.target_width / 2, self.room_width / 2 - self.target_width / 2, 0)
+            #print("self.receptacle_position", self.receptacle_position)
+            if self.target_pos:
+                self.receptacle_position = (self.target_pos[0], self.target_pos[1], 0)
+            else:
+                x, y =  self._get_random_position(self.target_width / 2)
+                self.receptacle_position = (x, y, 0)
             print("self.receptacle_position", self.receptacle_position)
 
         # Collections for keeping track of environment state
@@ -132,7 +142,7 @@ class VectorEnv:
 
         ################################################################################
         # Misc
-        self.action_space = spaces.Box(low=-1, high=1, shape=(self.n_agent * 2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=-1, high=1, shape=(self.n_agent, 2), dtype=np.float32)
         self.observation_space = spaces.Box(low=0, high=1, shape=(3 * self.n_agent + 2,), dtype=np.float32)
 
         # Stats
@@ -151,8 +161,7 @@ class VectorEnv:
 
         self._reset_poses()
         
-        
-
+    
         # Stats
         self.simulation_steps = 0
 
@@ -268,10 +277,10 @@ class VectorEnv:
     def robot_in_receptacle(self, robot):
         rx, ry, _ = robot.get_position()
         tx, ty, _ = self.receptacle_position
-        x_min = tx - VectorEnv.RECEPTACLE_WIDTH / 2
-        x_max = tx + VectorEnv.RECEPTACLE_WIDTH / 2
-        y_min = ty - VectorEnv.RECEPTACLE_WIDTH / 2
-        y_max = ty + VectorEnv.RECEPTACLE_WIDTH / 2
+        x_min = tx - self.target_width / 2
+        x_max = tx + self.target_width / 2
+        y_min = ty - self.target_width / 2
+        y_max = ty + self.target_width / 2
         return (rx >= x_min and rx <= x_max and ry >= y_min and ry <= y_max)
 
     def close(self):
@@ -336,8 +345,8 @@ class VectorEnv:
             receptacle_color = (1, 87.0 / 255, 89.0 / 255, 1)  # Red
             receptacle_collision_shape_id = self.p.createCollisionShape(pybullet.GEOM_BOX, halfExtents=(0, 0, 0))
             receptacle_visual_shape_id = self.p.createVisualShape(
-                #pybullet.GEOM_BOX, halfExtents=(VectorEnv.RECEPTACLE_WIDTH / 2, VectorEnv.RECEPTACLE_WIDTH / 2, 0),  # Gets rendered incorrectly in EGL renderer if height is 0
-                pybullet.GEOM_BOX, halfExtents=(VectorEnv.RECEPTACLE_WIDTH / 2, VectorEnv.RECEPTACLE_WIDTH / 2, 0.0001),
+                #pybullet.GEOM_BOX, halfExtents=(self.target_width / 2, self.target_width / 2, 0),  # Gets rendered incorrectly in EGL renderer if height is 0
+                pybullet.GEOM_BOX, halfExtents=(self.target_width / 2, self.target_width / 2, 0.0001),
                 rgbaColor=receptacle_color, visualFramePosition=(0, 0, 0.0001))
             self.receptacle_id = self.p.createMultiBody(0, receptacle_collision_shape_id, receptacle_visual_shape_id, self.receptacle_position)
 
@@ -454,7 +463,7 @@ class VectorEnv:
                 (self.room_length / 2, -self.room_width / 2),
                 (-self.room_length / 2, -self.room_width / 2),
             ]):
-            if any('rescue_robot' in g for g in self.robot_config) or distance((x, y), self.receptacle_position) > (1 + 1e-6) * (VectorEnv.RECEPTACLE_WIDTH / 2) * math.sqrt(2):
+            if any('rescue_robot' in g for g in self.robot_config) or distance((x, y), self.receptacle_position) > (1 + 1e-6) * (self.target_width / 2) * math.sqrt(2):
                 heading = -math.radians(i * 90)
                 offset = rounded_corner_width / math.sqrt(2)
                 adjusted_position = (x + offset * math.cos(heading - math.radians(45)), y + offset * math.sin(heading - math.radians(45)))
@@ -548,22 +557,7 @@ class VectorEnv:
         position_x, position_y = self.room_random_state.uniform((low_x, low_y), (high_x, high_y))
         return position_x, position_y
 
-    # def _execute_actions(self):
-    #     sim_steps = 0
-    #     while True:
-    #         if any(robot.is_idle() for robot in self.robots):
-    #             break
-    #         sim_steps += 1
-    #         for robot in self.robots:
-    #             robot.step()
-    #         self.step_simulation()
-
-    #     return sim_steps
-
     def _execute_actions(self):
-        # while True:
-        #     if any(robot.is_idle() for robot in self.robots):
-        #         break
         for robot in self.robots:
             robot.step()
         self.step_simulation()
@@ -578,20 +572,20 @@ class VectorEnv:
 
     @property
     def n_action(self):
-        return self.action_space.shape[0]
+        return self.action_space.shape
 
     @property
     def action_spaces(self):
-        return [[self.action_space.low[0], self.action_space.high[0]]] * self.action_space.shape[0]
+        return [[[self.action_space.low[0][0], self.action_space.high[0][0]]] * self.action_space.shape[1]] * self.action_space.shape[0]
 
     def get_avail_actions(self):
         return [self.get_avail_agent_actions(i) for i in range(self.n_agent)]
 
     def get_avail_agent_actions(self, nth):
-        return [self.action_spaces[nth * 2], self.action_spaces[nth * 2 + 1]]
+        return self.action_spaces[nth]
 
     def action_space_sample(self, i):
-        return [np.random.uniform(self.action_spaces[i][0], self.action_spaces[i][1]), np.random.uniform(self.action_spaces[i][0], self.action_spaces[i][1])]
+        return [np.random.uniform(self.action_spaces[i][0][0], self.action_spaces[i][0][1]), np.random.uniform(self.action_spaces[i][1][0], self.action_spaces[i][1][1])]
     
     def _collectCurMacroActions(self):
         # loop each agent
